@@ -1,0 +1,20 @@
+# Experimental alternative gateway. Never place this in series with Bifrost.
+model_list:
+  - model_name: local/qwen-fast
+    litellm_params:
+      model: ollama/qwen3.5:9b
+      api_base: http://ollama:11434
+  - model_name: local/qwen-batch
+    litellm_params:
+      model: openai/local-qwen-batch
+      api_base: http://vllm:8000/v1
+      api_key: os.environ/VLLM_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  disable_spend_logs: false
+
+litellm_settings:
+  set_verbose: false
+  drop_params: true
+  num_retries: 0

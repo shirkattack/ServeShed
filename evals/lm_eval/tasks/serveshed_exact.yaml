@@ -1,0 +1,19 @@
+task: serveshed_exact
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: evals/lm_eval/tasks/serveshed_exact.jsonl
+output_type: generate_until
+test_split: test
+doc_to_text: "{{prompt}}"
+doc_to_target: "{{target}}"
+generation_kwargs:
+  until:
+    - "\n"
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0

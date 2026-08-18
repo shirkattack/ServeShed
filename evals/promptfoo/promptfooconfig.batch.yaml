@@ -1,0 +1,34 @@
+description: serveshed vLLM batch-model gateway regression
+
+providers:
+  - id: openai:chat:vllm/local/qwen-batch
+    label: batch-via-bifrost
+    config:
+      apiBaseUrl: http://bifrost:8080/v1
+      # See promptfooconfig.yaml: no apiKey field, promptfoo reads
+      # OPENAI_API_KEY from the container environment automatically.
+      temperature: 0
+      max_tokens: 200
+      headers:
+        x-bf-eh-eval-suite: promptfoo-batch
+        x-bf-eh-agent-id: promptfoo
+        x-bf-eh-runtime: vllm
+
+prompts:
+  - "{{prompt}}"
+
+tests:
+  - description: exact output
+    vars:
+      prompt: Reply with exactly SERVESHED_OK
+    assert:
+      - type: equals
+        value: SERVESHED_OK
+  - description: coding contract
+    vars:
+      prompt: Write a Python function named clamp(value, lower, upper) that raises ValueError for inverted bounds.
+    assert:
+      - type: contains
+        value: def clamp
+      - type: contains
+        value: ValueError

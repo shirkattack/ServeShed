@@ -1,0 +1,25 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run offline-safe checks + full lint/type-check
+        run: |
+          # ./scripts/check.sh --full is the same offline, GPU-free suite that
+          # runs locally, plus ruff/mypy — those need package-index access,
+          # which this runner has and a serveshed desktop dev sandbox may not.
+          # This workflow never touches Docker, GPU, or any host-dependent
+          # path (config validate --docker, model pulls, up/down) — those
+          # stay manual on real Ubuntu Desktop hardware; see docs/handoff.md.
+          ./scripts/check.sh --full

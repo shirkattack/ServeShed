@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# uv / virtual environments
+.venv/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local secrets and generated environment files
+.env
+.env.*
+.env.bak-*
+!.env.example
+!**/.env.example
+
+# ServeShed generated state (lives under SERVESHED_DATA_DIR/SERVESHED_CACHE_DIR by
+# default, but ignore defensively if ever created inside the repo)
+eval-runs/
+
+# OS/editor noise
+.DS_Store
+*.swp

@@ -1,0 +1,364 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "source_of_truth": "config.json",
+  "encryption_key": "env.BIFROST_ENCRYPTION_KEY",
+  "framework": {
+    "pricing": {
+      "pricing_url": "file:///app/data/pricing.json",
+      "model_parameters_url": "file:///app/data/model-parameters.json",
+      "mcp_library_url": "file:///app/data/mcp-library.json"
+    }
+  },
+  "client": {
+    "initial_pool_size": 50,
+    "drop_excess_requests": false,
+    "enable_logging": true,
+    "disable_content_logging": false,
+    "log_retention_days": 30,
+    "logging_headers": [
+      "x-bf-eh-agent-id",
+      "x-bf-eh-workload",
+      "x-bf-eh-experiment-id",
+      "x-bf-eh-eval-suite",
+      "x-bf-eh-case-id",
+      "x-bf-eh-model-alias",
+      "x-bf-eh-dataset-sha256",
+      "x-bf-eh-model-revision",
+      "x-bf-eh-quantization",
+      "x-bf-eh-runtime",
+      "x-bf-eh-prompt-revision",
+      "x-bf-eh-git-commit"
+    ],
+    "enforce_auth_on_inference": true,
+    "allow_direct_keys": false,
+    "allowed_origins": [
+      "http://127.0.0.1:3000",
+      "http://localhost:3000",
+      "env.BIFROST_TAILSCALE_ORIGIN"
+    ],
+    "allowed_headers": [
+      "authorization",
+      "content-type",
+      "traceparent",
+      "tracestate",
+      "x-bf-session-id",
+      "x-bf-eh-agent-id",
+      "x-bf-eh-workload",
+      "x-bf-eh-experiment-id",
+      "x-bf-eh-eval-suite",
+      "x-bf-eh-case-id",
+      "x-bf-eh-model-alias",
+      "x-bf-eh-dataset-sha256",
+      "x-bf-eh-model-revision",
+      "x-bf-eh-quantization",
+      "x-bf-eh-runtime",
+      "x-bf-eh-prompt-revision",
+      "x-bf-eh-git-commit"
+    ],
+    "whitelisted_routes": [
+      "/health"
+    ],
+    "header_filter_config": {
+      "allowlist": [
+        "x-bf-eh-agent-id",
+        "x-bf-eh-workload",
+        "x-bf-eh-experiment-id",
+        "x-bf-eh-eval-suite",
+        "x-bf-eh-case-id",
+        "x-bf-eh-model-alias",
+        "x-bf-eh-dataset-sha256",
+        "x-bf-eh-model-revision",
+        "x-bf-eh-quantization",
+        "x-bf-eh-runtime",
+        "x-bf-eh-prompt-revision",
+        "x-bf-eh-git-commit"
+      ],
+      "denylist": []
+    }
+  },
+  "providers": {
+    "ollama": {
+      "keys": [
+        {
+          "name": "ollama-local",
+          "value": "",
+          "models": [
+            "local/qwen-fast",
+            "local/qwen-quality",
+            "experimental/qwen-nvfp4",
+            "local/gemma-judge",
+            "experimental/qwen38-offload",
+            "experimental/qwen-abliterated"
+          ],
+          "aliases": {
+            "local/qwen-fast": "qwen3.5:9b",
+            "local/qwen-quality": "qwen3.5:9b-q8_0",
+            "experimental/qwen-nvfp4": "qwen3.5:9b-nvfp4",
+            "local/gemma-judge": "gemma4:12b",
+            "experimental/qwen38-offload": "qwen3.8:27b",
+            "experimental/qwen-abliterated": "huihui_ai/qwen3.5-abliterated:9b-q4_K"
+          },
+          "weight": 1.0,
+          "ollama_key_config": {
+            "url": "env.OLLAMA_URL"
+          }
+        }
+      ],
+      "network_config": {
+        "default_request_timeout_in_seconds": 900,
+        "max_retries": 0,
+        "allow_private_network": true
+      }
+    },
+    "vllm": {
+      "keys": [
+        {
+          "name": "vllm-local-batch",
+          "value": "env.VLLM_API_KEY",
+          "models": [
+            "local/qwen-batch"
+          ],
+          "aliases": {
+            "local/qwen-batch": "local-qwen-batch"
+          },
+          "weight": 1.0,
+          "vllm_key_config": {
+            "url": "env.VLLM_URL",
+            "model_name": "local-qwen-batch"
+          }
+        }
+      ],
+      "network_config": {
+        "default_request_timeout_in_seconds": 900,
+        "max_retries": 0,
+        "allow_private_network": true
+      }
+    }
+  },
+  "config_store": {
+    "enabled": true,
+    "type": "postgres",
+    "config": {
+      "host": "env.PG_HOST",
+      "port": "env.PG_PORT",
+      "user": "env.PG_USER",
+      "password": "env.PG_PASSWORD",
+      "db_name": "env.PG_DATABASE",
+      "ssl_mode": "disable"
+    }
+  },
+  "logs_store": {
+    "enabled": true,
+    "type": "postgres",
+    "config": {
+      "host": "env.PG_HOST",
+      "port": "env.PG_PORT",
+      "user": "env.PG_USER",
+      "password": "env.PG_PASSWORD",
+      "db_name": "env.PG_DATABASE",
+      "ssl_mode": "disable"
+    }
+  },
+  "governance": {
+    "auth_config": {
+      "is_enabled": true,
+      "admin_username": "env.BIFROST_ADMIN_USERNAME",
+      "admin_password": "env.BIFROST_ADMIN_PASSWORD",
+      "disable_auth_on_inference": false
+    },
+    "virtual_keys": [
+      {
+        "id": "vk-hermes",
+        "name": "hermes-agent",
+        "value": "env.BIFROST_VK_HERMES",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "local/qwen-fast",
+              "local/qwen-quality"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          },
+          {
+            "provider": "vllm",
+            "allowed_models": [
+              "local/qwen-batch"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "vk-research",
+        "name": "research-agent",
+        "value": "env.BIFROST_VK_RESEARCH",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "local/qwen-fast",
+              "local/qwen-quality"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          },
+          {
+            "provider": "vllm",
+            "allowed_models": [
+              "local/qwen-batch"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "vk-coding",
+        "name": "coding-agent",
+        "value": "env.BIFROST_VK_CODING",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "local/qwen-fast",
+              "local/qwen-quality"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          },
+          {
+            "provider": "vllm",
+            "allowed_models": [
+              "local/qwen-batch"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "vk-eval",
+        "name": "evaluation-runner",
+        "value": "env.BIFROST_VK_EVAL",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "local/qwen-fast",
+              "local/qwen-quality",
+              "experimental/qwen-nvfp4",
+              "local/gemma-judge",
+              "experimental/qwen38-offload",
+              "experimental/qwen-abliterated"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          },
+          {
+            "provider": "vllm",
+            "allowed_models": [
+              "local/qwen-batch"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "vk-judge",
+        "name": "evaluation-judge",
+        "value": "env.BIFROST_VK_JUDGE",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "local/gemma-judge",
+              "local/qwen-fast"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          },
+          {
+            "provider": "vllm",
+            "allowed_models": [
+              "local/qwen-batch"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "vk-webui",
+        "name": "open-webui",
+        "value": "env.BIFROST_VK_WEBUI",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "local/qwen-fast",
+              "local/qwen-quality",
+              "local/gemma-judge",
+              "experimental/qwen-abliterated"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "name": "otel",
+      "enabled": true,
+      "config": {
+        "collector_url": "env.OTEL_COLLECTOR_URL",
+        "trace_type": "genai_extension",
+        "protocol": "http",
+        "service_name": "serveshed-bifrost",
+        "disable_content_logging": false,
+        "disable_root_span_content": false,
+        "metrics_enabled": false
+      }
+    },
+    {
+      "name": "logging",
+      "enabled": true,
+      "config": {
+        "disable_content_logging": false
+      }
+    }
+  ]
+}

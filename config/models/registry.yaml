@@ -1,0 +1,437 @@
+{
+  "schema_version": 2,
+  "models": [
+    {
+      "alias": "local/qwen-fast",
+      "gateway_model": "ollama/local/qwen-fast",
+      "purpose": "Default daily model for chat, coding, tools, multimodal tasks, and routine evaluations",
+      "runtime": "ollama",
+      "upstream_repo": "Qwen/Qwen3.5-9B",
+      "revision": "PIN_AFTER_FIRST_HOST_VALIDATION",
+      "artifact": "qwen3.5:9b",
+      "artifact_digest": "",
+      "quantization": "official Ollama Q4_K_M",
+      "context_tokens": 8192,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": 6.6,
+      "approval": "approved-for-measurement-only",
+      "notes": "Primary 16 GB GPU candidate. Measure desktop headroom, tool fidelity, vision behavior, latency, and context scaling before promotion from measurement-only status.",
+      "tier": "daily",
+      "enabled": true,
+      "workloads": [
+        "general",
+        "agents",
+        "coding",
+        "tools",
+        "multimodal",
+        "evaluation"
+      ],
+      "min_vram_gib": 10.0,
+      "recommended_vram_gib": 12.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "thinking",
+        "vision",
+        "tools",
+        "qwen",
+        "modern"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      }
+    },
+    {
+      "alias": "local/qwen-quality",
+      "gateway_model": "ollama/local/qwen-quality",
+      "purpose": "Higher-precision Qwen comparison for quality-sensitive local work",
+      "runtime": "ollama",
+      "upstream_repo": "Qwen/Qwen3.5-9B",
+      "revision": "PIN_AFTER_FIRST_HOST_VALIDATION",
+      "artifact": "qwen3.5:9b-q8_0",
+      "artifact_digest": "",
+      "quantization": "official Ollama Q8_0",
+      "context_tokens": 8192,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": 11.0,
+      "approval": "approved-for-measurement-only",
+      "notes": "Quality comparison profile. It may be tight on a desktop-driven 16 GB GPU as context grows; do not assume it is the default until measured.",
+      "tier": "quality",
+      "enabled": true,
+      "workloads": [
+        "general",
+        "coding",
+        "tools",
+        "multimodal",
+        "evaluation"
+      ],
+      "min_vram_gib": 14.0,
+      "recommended_vram_gib": 18.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "optional",
+      "tags": [
+        "thinking",
+        "vision",
+        "tools",
+        "qwen",
+        "quality"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      }
+    },
+    {
+      "alias": "experimental/qwen-nvfp4",
+      "gateway_model": "ollama/experimental/qwen-nvfp4",
+      "purpose": "Blackwell-oriented Qwen quantization candidate for quality and speed comparison",
+      "runtime": "ollama",
+      "upstream_repo": "Qwen/Qwen3.5-9B",
+      "revision": "PIN_AFTER_FIRST_HOST_VALIDATION",
+      "artifact": "qwen3.5:9b-nvfp4",
+      "artifact_digest": "",
+      "quantization": "official Ollama NVFP4 artifact",
+      "context_tokens": 8192,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": 8.9,
+      "approval": "approved-for-measurement-only",
+      "notes": "Measure on the RTX 5070 Ti before considering promotion. Compare quality, throughput, VRAM, and runtime compatibility against Q4_K_M and Q8_0.",
+      "tier": "experimental",
+      "enabled": true,
+      "workloads": [
+        "general",
+        "agents",
+        "coding",
+        "tools",
+        "multimodal",
+        "evaluation"
+      ],
+      "min_vram_gib": 12.0,
+      "recommended_vram_gib": 14.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "thinking",
+        "vision",
+        "tools",
+        "qwen",
+        "blackwell",
+        "nvfp4"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      }
+    },
+    {
+      "alias": "experimental/qwen-abliterated",
+      "gateway_model": "ollama/experimental/qwen-abliterated",
+      "purpose": "Refusal-ablated Qwen3.5-9B for research/creative use where default refusal behavior gets in the way; never used as a judge or eval grader",
+      "runtime": "ollama",
+      "upstream_repo": "huihui-ai/Huihui-Qwen3.5-9B-abliterated",
+      "revision": "PIN_AFTER_FIRST_HOST_VALIDATION",
+      "artifact": "huihui_ai/qwen3.5-abliterated:9b-q4_K",
+      "artifact_digest": "",
+      "quantization": "community Q4_K (huihui_ai)",
+      "context_tokens": 8192,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": 6.6,
+      "approval": "approved-for-measurement-only",
+      "notes": "Base is Qwen3.5-9B, same as local/qwen-fast — abliteration (activation-space refusal-direction removal, not fine-tuning) strips the refusal circuit only; huihui_ai's own model card calls it a 'crude, proof-of-concept implementation' with no rigorous safety review. Independent benchmarking shows measurable TruthfulQA/Lambada degradation versus the unmodified base. Treat as experimental until measured the same as any other candidate — starting successfully is not acceptance. Do not use in the judge or eval-grader role: an uncensored judge undermines the judging function.",
+      "tier": "experimental",
+      "enabled": true,
+      "workloads": [
+        "general",
+        "agents",
+        "coding",
+        "tools",
+        "multimodal"
+      ],
+      "min_vram_gib": 10.0,
+      "recommended_vram_gib": 12.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "thinking",
+        "vision",
+        "tools",
+        "qwen",
+        "abliterated",
+        "uncensored"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      }
+    },
+    {
+      "alias": "local/qwen-batch",
+      "gateway_model": "vllm/local/qwen-batch",
+      "purpose": "Concurrent agents and batch evaluation generation after a quantized vLLM artifact is accepted",
+      "runtime": "vllm",
+      "upstream_repo": "Qwen/Qwen3.5-9B",
+      "revision": "REVIEW_REQUIRED",
+      "artifact": "",
+      "artifact_digest": "",
+      "quantization": "REVIEW_REQUIRED",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": null,
+      "approval": "not-approved",
+      "notes": "Select a reviewed quantized checkpoint with reproducible provenance. The unquantized official weights are not the intended 16 GB deployment path.",
+      "tier": "batch",
+      "enabled": true,
+      "workloads": [
+        "agents",
+        "batch",
+        "coding",
+        "tools",
+        "evaluation"
+      ],
+      "min_vram_gib": 12.0,
+      "recommended_vram_gib": 16.0,
+      "recommended_ram_gib": 64.0,
+      "cpu_offload": "none",
+      "tags": [
+        "thinking",
+        "tools",
+        "qwen",
+        "vllm",
+        "review-gated"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "max_model_len": 8192,
+        "max_num_seqs": 2,
+        "gpu_memory_utilization": 0.8,
+        "language_model_only": true
+      }
+    },
+    {
+      "alias": "local/gemma-judge",
+      "gateway_model": "ollama/local/gemma-judge",
+      "purpose": "Different-family local judge and multimodal comparison model",
+      "runtime": "ollama",
+      "upstream_repo": "google/gemma-4-12B",
+      "revision": "PIN_AFTER_FIRST_HOST_VALIDATION",
+      "artifact": "gemma4:12b",
+      "artifact_digest": "",
+      "quantization": "official Ollama Q4_K_M with multimodal projector",
+      "context_tokens": 8192,
+      "modalities": [
+        "text",
+        "image",
+        "audio"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": 7.4,
+      "approval": "approved-for-measurement-only",
+      "notes": "Use sequentially after target generation. Calibrate judge behavior against human-reviewed examples and deterministic graders.",
+      "tier": "judge",
+      "enabled": true,
+      "workloads": [
+        "judge",
+        "evaluation",
+        "multimodal",
+        "general"
+      ],
+      "min_vram_gib": 11.0,
+      "recommended_vram_gib": 13.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "thinking",
+        "vision",
+        "audio",
+        "tools",
+        "gemma",
+        "judge"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      }
+    },
+    {
+      "alias": "experimental/hermes-agent",
+      "gateway_model": "ollama/experimental/hermes-agent",
+      "purpose": "Hermes-focused tool-use, structured-output, and agent compatibility challenger",
+      "runtime": "ollama",
+      "upstream_repo": "NousResearch/Hermes-4-14B",
+      "revision": "REVIEW_REQUIRED",
+      "artifact": "",
+      "artifact_digest": "",
+      "quantization": "REVIEW_REQUIRED",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": null,
+      "approval": "not-approved",
+      "notes": "Choose and pin a GGUF or Ollama artifact only after chat template, checksum, license, memory, and tool-call evaluation.",
+      "tier": "experimental",
+      "enabled": true,
+      "workloads": [
+        "agents",
+        "coding",
+        "tools",
+        "evaluation"
+      ],
+      "min_vram_gib": 14.0,
+      "recommended_vram_gib": 16.0,
+      "recommended_ram_gib": 64.0,
+      "cpu_offload": "optional",
+      "tags": [
+        "thinking",
+        "tools",
+        "hermes",
+        "structured-output",
+        "review-gated"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      }
+    },
+    {
+      "alias": "experimental/qwen38-offload",
+      "gateway_model": "ollama/experimental/qwen38-offload",
+      "purpose": "Occasional Qwen3.8 quality comparison using partial CPU offload",
+      "runtime": "ollama",
+      "upstream_repo": "Qwen/Qwen3.8-27B",
+      "revision": "PIN_AFTER_FIRST_HOST_VALIDATION",
+      "artifact": "qwen3.8:27b",
+      "artifact_digest": "",
+      "quantization": "official Ollama Q4_K_M plus multimodal projector",
+      "context_tokens": 4096,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "tools": true,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": 18.0,
+      "approval": "approved-for-measurement-only",
+      "notes": "The artifact exceeds the 16 GB GPU capacity before runtime and desktop overhead. Treat it as offload-only, single-concurrency, and non-default.",
+      "tier": "experimental",
+      "enabled": true,
+      "workloads": [
+        "quality",
+        "coding",
+        "agents",
+        "multimodal",
+        "evaluation"
+      ],
+      "min_vram_gib": 16.0,
+      "recommended_vram_gib": 24.0,
+      "recommended_ram_gib": 64.0,
+      "cpu_offload": "required",
+      "tags": [
+        "thinking",
+        "vision",
+        "tools",
+        "qwen",
+        "offload"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 4096,
+        "parallel": 1,
+        "keep_alive": "0"
+      }
+    },
+    {
+      "alias": "local/embed",
+      "gateway_model": "ollama/local/embed",
+      "purpose": "Embeddings for future RAG and semantic evaluation",
+      "runtime": "ollama",
+      "upstream_repo": "REVIEW_REQUIRED",
+      "revision": "REVIEW_REQUIRED",
+      "artifact": "",
+      "artifact_digest": "",
+      "quantization": "REVIEW_REQUIRED",
+      "context_tokens": 0,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "REVIEW_REQUIRED",
+      "approximate_disk_gib": null,
+      "approval": "not-approved",
+      "notes": "Select only after retrieval languages, dimensions, corpus, and an embedding evaluation dataset are defined.",
+      "tier": "service",
+      "enabled": true,
+      "workloads": [
+        "rag",
+        "embeddings",
+        "evaluation"
+      ],
+      "min_vram_gib": null,
+      "recommended_vram_gib": null,
+      "recommended_ram_gib": 16.0,
+      "cpu_offload": "unknown",
+      "tags": [
+        "embeddings",
+        "review-gated"
+      ],
+      "default_parameters": {},
+      "runtime_parameters": {}
+    }
+  ]
+}

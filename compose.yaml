@@ -1,0 +1,298 @@
+name: ${COMPOSE_PROJECT_NAME:-serveshed}
+
+x-core-profiles: &core-profiles [core, chat, eval]
+x-common-logging: &common-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:17.9-alpine}
+    profiles: *core-profiles
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_SUPERUSER_DB}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      PHOENIX_DB_USER: ${PHOENIX_DB_USER}
+      PHOENIX_DB_PASSWORD: ${PHOENIX_DB_PASSWORD}
+      PHOENIX_DB_NAME: ${PHOENIX_DB_NAME}
+      BIFROST_DB_USER: ${BIFROST_DB_USER}
+      BIFROST_DB_PASSWORD: ${BIFROST_DB_PASSWORD}
+      BIFROST_DB_NAME: ${BIFROST_DB_NAME}
+    volumes:
+      - ${SERVESHED_DATA_DIR}/postgres:/var/lib/postgresql/data
+      - ./config/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    stop_grace_period: 30s
+    logging: *common-logging
+
+  phoenix:
+    image: ${PHOENIX_IMAGE:-arizephoenix/phoenix:version-20.2.0}
+    profiles: *core-profiles
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PHOENIX_SQL_DATABASE_URL: postgresql://${PHOENIX_DB_USER}:${PHOENIX_DB_PASSWORD}@postgres:5432/${PHOENIX_DB_NAME}
+      PHOENIX_HOST: 0.0.0.0
+      PHOENIX_PORT: "6006"
+      PHOENIX_GRPC_PORT: "4317"
+      PHOENIX_TELEMETRY_ENABLED: "false"
+      PHOENIX_ALLOW_EXTERNAL_RESOURCES: "false"
+    ports:
+      - "127.0.0.1:${PHOENIX_PORT:-6006}:6006"
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:6006/', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    stop_grace_period: 30s
+    logging: *common-logging
+
+  otel-collector:
+    image: ${OTEL_IMAGE:-otel/opentelemetry-collector-contrib:0.158.0}
+    profiles: *core-profiles
+    depends_on:
+      phoenix:
+        condition: service_healthy
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./config/otel/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "validate", "--config=/etc/otelcol-contrib/config.yaml"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging: *common-logging
+
+  bifrost:
+    image: ${BIFROST_IMAGE:-maximhq/bifrost:v1.6.10}
+    profiles: *core-profiles
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8080"
+      LOG_LEVEL: info
+      BIFROST_ENCRYPTION_KEY: ${BIFROST_ENCRYPTION_KEY}
+      BIFROST_ADMIN_USERNAME: ${BIFROST_ADMIN_USERNAME}
+      BIFROST_ADMIN_PASSWORD: ${BIFROST_ADMIN_PASSWORD}
+      BIFROST_VK_HERMES: ${BIFROST_VK_HERMES}
+      BIFROST_VK_RESEARCH: ${BIFROST_VK_RESEARCH}
+      BIFROST_VK_CODING: ${BIFROST_VK_CODING}
+      BIFROST_VK_EVAL: ${BIFROST_VK_EVAL}
+      BIFROST_VK_JUDGE: ${BIFROST_VK_JUDGE}
+      BIFROST_VK_WEBUI: ${BIFROST_VK_WEBUI}
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      PG_USER: ${BIFROST_DB_USER}
+      PG_PASSWORD: ${BIFROST_DB_PASSWORD}
+      PG_DATABASE: ${BIFROST_DB_NAME}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      VLLM_URL: ${VLLM_URL:-http://vllm:8000}
+      VLLM_API_KEY: ${VLLM_API_KEY}
+      OTEL_COLLECTOR_URL: ${OTEL_COLLECTOR_URL:-http://otel-collector:4318/v1/traces}
+    volumes:
+      - ${SERVESHED_DATA_DIR}/bifrost:/app/data
+      - ${BIFROST_CONFIG_FILE:-./config/bifrost/config.json}:/app/data/config.json:ro
+      # Bifrost's model-catalog init (pricing + model-parameters, both
+      # fatal-on-failure; MCP library, non-fatal but retries forever) fetch
+      # from getbifrost.ai by default. The backend network has no internet
+      # route by design (ADR 0010), so config.json points all three at
+      # these local empty file:// datasheets instead of the internet.
+      # See ADR 0011.
+      - ./config/bifrost/pricing.empty.json:/app/data/pricing.json:ro
+      - ./config/bifrost/model-parameters.empty.json:/app/data/model-parameters.json:ro
+      - ./config/bifrost/mcp-library.empty.json:/app/data/mcp-library.json:ro
+    ports:
+      - "127.0.0.1:${BIFROST_PORT:-8080}:8080"
+    networks: [backend]
+    stop_grace_period: 30s
+    logging: *common-logging
+
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:0.32.9}
+    profiles: [chat]
+    gpus: all
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-8192}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-2m}
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-1}
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-1}
+      OLLAMA_FLASH_ATTENTION: ${OLLAMA_FLASH_ATTENTION:-1}
+      OLLAMA_KV_CACHE_TYPE: ${OLLAMA_KV_CACHE_TYPE:-q8_0}
+    volumes:
+      - ${SERVESHED_DATA_DIR}/ollama:/root/.ollama
+    networks:
+      backend:
+      # Docker breaks gateway-selection ties (both default to gw_priority 0)
+      # in backend's favor, which has no internet route by design (ADR
+      # 0010) — that silently killed model pulls until this was set
+      # explicitly. See ADR 0012.
+      egress:
+        gw_priority: 1
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    stop_grace_period: 30s
+    logging: *common-logging
+
+  open-webui:
+    image: ${OPENWEBUI_IMAGE:-ghcr.io/open-webui/open-webui:v0.11.0}
+    profiles: [chat]
+    depends_on:
+      bifrost:
+        condition: service_healthy
+    environment:
+      WEBUI_AUTH: ${WEBUI_AUTH:-true}
+      WEBUI_SECRET_KEY: ${OPENWEBUI_SECRET_KEY}
+      # Explicit rather than relying on Open WebUI's own default: this
+      # setting persists to its sqlite config table after first boot and
+      # does NOT re-read from this env var on later restarts (confirmed —
+      # WEBUI_AUTH does re-read each boot, ENABLE_SIGNUP did not, see
+      # ADR 0015). Only matters for a genuinely fresh $SERVESHED_DATA_DIR;
+      # flip via the database directly if it drifts again on an existing
+      # install, not by editing this line and restarting.
+      ENABLE_SIGNUP: "true"
+      # Talks to Bifrost only, as a plain OpenAI-compatible backend. Direct
+      # Ollama access is diagnostic-only project-wide (README); disabling
+      # it here means Open WebUI has no path around Bifrost's governance and
+      # tracing even if someone adds an OLLAMA_URL later.
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URLS: http://bifrost:8080/v1
+      OPENAI_API_KEYS: ${BIFROST_VK_WEBUI}
+      # This container has no internet route (ADR 0010) and none of these
+      # background fetches would succeed anyway — disable them explicitly
+      # rather than let them fail/retry into the void. See ADR 0014.
+      OFFLINE_MODE: "true"
+      HF_HUB_OFFLINE: "1"
+      RAG_EMBEDDING_MODEL_AUTO_UPDATE: "false"
+      RAG_RERANKING_MODEL_AUTO_UPDATE: "false"
+      WHISPER_MODEL_AUTO_UPDATE: "false"
+    volumes:
+      - ${SERVESHED_DATA_DIR}/open-webui:/app/backend/data
+    networks: [backend]
+    ports:
+      - "127.0.0.1:${OPENWEBUI_PORT:-3000}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    stop_grace_period: 30s
+    logging: *common-logging
+
+  vllm:
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:v0.27.1-cu129-ubuntu2404}
+    profiles: [eval]
+    gpus: all
+    ipc: host
+    environment:
+      HF_HOME: /cache/huggingface
+      HF_TOKEN: ${HF_TOKEN:-}
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ${SERVESHED_CACHE_DIR}/huggingface:/cache/huggingface
+    command:
+      - --model
+      - ${VLLM_MODEL_ID:-REVIEW_REQUIRED}
+      - --served-model-name
+      - ${VLLM_SERVED_MODEL_NAME:-local-qwen-batch}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --api-key
+      - ${VLLM_API_KEY}
+      - --gpu-memory-utilization
+      - ${VLLM_GPU_MEMORY_UTILIZATION:-0.80}
+      - --max-model-len
+      - ${VLLM_MAX_MODEL_LEN:-8192}
+      - --max-num-seqs
+      - ${VLLM_MAX_NUM_SEQS:-2}
+      - --disable-log-requests
+    networks:
+      backend:
+      # Docker breaks gateway-selection ties (both default to gw_priority 0)
+      # in backend's favor, which has no internet route by design (ADR
+      # 0010) — that silently killed model pulls until this was set
+      # explicitly. See ADR 0012.
+      egress:
+        gw_priority: 1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 120s
+    stop_grace_period: 60s
+    logging: *common-logging
+
+  promptfoo:
+    image: ${PROMPTFOO_IMAGE:-ghcr.io/promptfoo/promptfoo:0.122.0}
+    profiles: [tools]
+    working_dir: /workspace
+    environment:
+      OPENAI_API_KEY: ${BIFROST_VK_EVAL}
+      OPENAI_BASE_URL: http://bifrost:8080/v1
+      PROMPTFOO_CACHE_ENABLED: "false"
+      PROMPTFOO_DISABLE_TELEMETRY: "1"
+    volumes:
+      - ./evals/promptfoo:/workspace:ro
+      - ${SERVESHED_DATA_DIR}/eval-runs:/results
+    networks: [backend]
+    entrypoint: ["promptfoo"]
+    command: ["--version"]
+    logging: *common-logging
+
+  litellm-experimental:
+    image: ${LITELLM_IMAGE:-litellm/litellm:v1.96.2}
+    profiles: [experimental]
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      VLLM_API_KEY: ${VLLM_API_KEY}
+    volumes:
+      - ./config/litellm/config.yaml:/app/config.yaml:ro
+    ports:
+      - "127.0.0.1:${LITELLM_PORT:-4000}:4000"
+    networks: [backend]
+    logging: *common-logging
+
+networks:
+  # A Compose network marked "internal" blocks the NAT/port-forwarding path
+  # that host port publishing relies on (confirmed by a live repro on the
+  # target host: published ports on that kind of network never became
+  # reachable at 127.0.0.1, even though `docker inspect` showed the binding
+  # recorded). Disabling masquerade on a normal bridge network gets the
+  # property we actually want instead: no outbound internet route for
+  # postgres, phoenix, otel-collector, and bifrost, while 127.0.0.1 port
+  # publishing for bifrost/phoenix keeps working. See ADR 0010.
+  backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+  egress:
+    driver: bridge

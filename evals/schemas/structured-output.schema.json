@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://serveshed.local/schemas/structured-output.schema.json",
+  "title": "ServeShed smoke structured output",
+  "type": "object",
+  "required": ["name", "status"],
+  "properties": {
+    "name": {"const": "serveshed"},
+    "status": {"const": "ready"}
+  },
+  "additionalProperties": true
+}

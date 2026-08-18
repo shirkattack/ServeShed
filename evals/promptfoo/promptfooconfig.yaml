@@ -1,0 +1,47 @@
+description: serveshed daily-model gateway regression
+
+providers:
+  - id: openai:chat:ollama/local/qwen-fast
+    label: qwen-fast-via-bifrost
+    config:
+      apiBaseUrl: http://bifrost:8080/v1
+      # No apiKey field here: promptfoo's openai:chat provider reads
+      # OPENAI_API_KEY straight from the container environment
+      # (compose.yaml sets it to BIFROST_VK_EVAL). `${OPENAI_API_KEY}` is
+      # not promptfoo's env-interpolation syntax (that's `{{ env.VAR }}`),
+      # so writing it here sent Bifrost an unresolved literal and every
+      # request came back 401 virtual_key_required.
+      temperature: 0
+      max_tokens: 200
+      headers:
+        x-bf-eh-eval-suite: promptfoo-smoke
+        x-bf-eh-agent-id: promptfoo
+        x-bf-eh-runtime: ollama
+
+prompts:
+  - "{{prompt}}"
+
+tests:
+  - description: exact output
+    vars:
+      prompt: Reply with exactly SERVESHED_OK
+    assert:
+      - type: equals
+        value: SERVESHED_OK
+  - description: structured JSON
+    vars:
+      prompt: Return only JSON with keys state and worker_count. State is healthy and worker_count is 1.
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const parsed = JSON.parse(output);
+          return parsed.state === 'healthy' && parsed.worker_count === 1;
+  - description: coding contract
+    vars:
+      prompt: Write a Python function named clamp(value, lower, upper) that raises ValueError for inverted bounds.
+    assert:
+      - type: contains
+        value: def clamp
+      - type: contains
+        value: ValueError
