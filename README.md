@@ -3,12 +3,12 @@
 # <img src="docs/media/logo-wordmark.svg" alt="ServeShed" width="260" height="62" />
 
 **A local-first LLM workstation and on-demand server for a single Ubuntu Desktop.**
-One GPU. One gateway. Zero silent cloud calls.
+One consumer GPU. One gateway. Zero silent cloud calls.
 
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![uv](https://img.shields.io/badge/managed%20by-uv-de5fe4?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Docker Compose](https://img.shields.io/badge/docker%20compose-native%20engine-2496ED?logo=docker&logoColor=white)](compose.yaml)
-[![GPU](https://img.shields.io/badge/GPU-RTX%205070%20Ti%2016GB-76B900?logo=nvidia&logoColor=white)](docs/models.md)
+[![GPU](https://img.shields.io/badge/GPU-consumer%20grade%2012--16GB-76B900?logo=nvidia&logoColor=white)](docs/models.md)
 [![Gateway](https://img.shields.io/badge/gateway-Bifrost%20only-6d28d9)](docs/adrs/0001-bifrost-as-default-gateway.md)
 [![Cloud Fallback](https://img.shields.io/badge/cloud%20fallback-never-critical)](docs/adrs/0001-bifrost-as-default-gateway.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -23,9 +23,9 @@ One GPU. One gateway. Zero silent cloud calls.
 ---
 
 > [!NOTE]
-> **This isn't aspirational.** Every claim below has been exercised end-to-end on real hardware — an Ubuntu 24.04 desktop with an RTX 5070 Ti — not just unit-tested offline. GPU passthrough into containers, all four core services healthy, Bifrost authentication enforced, `qwen3.5:9b` pulled and loaded, and one streaming + one non-streaming completion traced all the way into Phoenix. A cluster of real Docker-networking and Bifrost bugs turned up doing that, each fixed and documented in [ADRs 0010–0013](#-decision-log). See [`docs/verification-report.md`](docs/verification-report.md) for the full picture.
+> **This isn't aspirational.** Every claim below has been exercised end-to-end on real hardware — an Ubuntu 24.04 desktop with a consumer-grade NVIDIA GPU (e.g., RTX 5070 Ti with 16GB VRAM) — not just unit-tested offline. GPU passthrough into containers, all four core services healthy, Bifrost authentication enforced, `qwen3.5:9b` pulled and loaded, and one streaming + one non-streaming completion traced all the way into Phoenix. A cluster of real Docker-networking and Bifrost bugs turned up doing that, each fixed and documented in [ADRs 0010–0013](#-decision-log). See [`docs/verification-report.md`](docs/verification-report.md) for the full picture.
 
-## 🎬 See it work
+## See it work
 
 The daily loop, recorded for real against a running stack — start the GPU services, confirm everything's healthy, send a real completion through Bifrost, then give the GPU back:
 
@@ -35,10 +35,15 @@ The daily loop, recorded for real against a running stack — start the GPU serv
 
 ## Table of contents
 
+**Quick start:** [One-time setup](#-one-time-setup) · [Daily driver](#-daily-driver) · [Talking to the model](#-talking-to-the-model)
+
+<details>
+<summary><strong>Complete contents</strong></summary>
+
 - [See it work](#-see-it-work)
 - [Why this exists](#why-this-exists)
 - [Highlights](#-highlights)
-- [Architecture](#-architecture)
+- [Architecture](#architecture)
 - [One-time setup](#-one-time-setup)
 - [Daily driver](#-daily-driver)
 - [Where to look](#-where-to-look)
@@ -54,27 +59,29 @@ The daily loop, recorded for real against a running stack — start the GPU serv
 - [Contributing](#contributing)
 - [License](#license)
 
+</details>
+
 ## Why this exists
 
 Most "local LLM" setups are `ollama run` plus a chat UI, and that's the whole architecture — no gateway, no audit trail, no answer to "why is *this* the default model" beyond "it started successfully." That's fine for a toy. It's not fine for something you route agents, tools, and other people's chats through.
 
 `serveshed` is what that setup looks like with governance actually built in: **one authenticated gateway** every caller goes through — no agent, script, or UI ever talks to Ollama or vLLM directly — **evidence before promotion**, where a model becomes the default only after a checksummed evaluation bundle and a checksummed benchmark bundle both clear explicit thresholds, and **immutable, tamper-evident runs**, where every eval, benchmark, and acceptance decision is SHA-256-manifested and verifiable after the fact. Layered on top of the parts every setup needs anyway: the desktop stays a desktop (GPU release is one command, verified against `nvidia-smi`, not assumed), and nothing reaches the internet by default — no cloud fallback exists to reach, enforced by network isolation and a static check, not a promise in a doc.
 
-## ✨ Highlights
+## Highlights
 
-- 🌉 **One gateway, always** — [Bifrost](https://docs.getbifrost.ai/) is the sole authenticated OpenAI-compatible endpoint. No agent, script, or notebook talks to Ollama or vLLM directly.
-- 💬 **A real chat UI, not just curl** — Open WebUI, with history, comes up with `up chat`. It's a Bifrost client like any other — same governance, same tracing, no side door to Ollama.
-- 🔌 **GPU inference is a light switch** — `serveshed up chat` / `up eval` / `gpu-off`. Ollama and vLLM are mutually exclusive by construction; releasing the GPU is one command, verified to actually free VRAM.
-- 📊 **Evidence, not vibes, promotes a model** — `model accept` requires a checksummed evaluation bundle *and* a checksummed benchmark bundle for the same alias, explicit pass/latency/throughput thresholds, and blocks `.env` promotion the moment any threshold fails.
-- 🔒 **Immutable, tamper-evident runs** — every eval, benchmark, and acceptance decision writes a SHA-256-manifested bundle. Verification rejects mismatches, missing files, symlinks, and path traversal before a bundle is trusted.
-- 🕵️ **Content logging is a deliberate, documented choice, not a default nobody looked at** — currently on for all traffic ([ADR 0016](docs/adrs/0016-content-logging-enabled-by-default.md); Bifrost has no per-key content scoping, so this applies to every caller). It defaulted to hidden-by-default before that; either way, it's one config value, one static test asserting it matches what's declared, and treated as sensitive data either way.
-- 🚫 **No silent cloud route — enforced, not promised** — no default cloud provider exists in the config. [LiteLLM](https://www.litellm.ai/) sits fully isolated on its own port purely as a future comparison candidate against Bifrost — nothing in this stack routes through it — and a static check fails the build the moment anything chains it through Bifrost anyway.
-- 🗄️ **Fail-closed backups** — Synology writes happen only when the mount is real *and* a reviewed marker file is present. A dangling mount point never silently fills your root disk.
-- 🧭 **Hardware-aware model registry** — recommendations are ranked against your actual detected VRAM/RAM, not a model card's advertised context window.
-- 🧪 **Dependency-free bootstrap** — the control plane is standard-library Python, `uv`-managed, with 76 offline tests and 30 static architecture checks that run without Docker or a network connection.
-- 📖 **Every non-obvious call is an ADR** — [19 of them](#-decision-log) so far, several written the same day the bug they fix was found on real hardware.
+- **One gateway, always** — [Bifrost](https://docs.getbifrost.ai/) is the sole authenticated OpenAI-compatible endpoint. No agent, script, or notebook talks to Ollama or vLLM directly.
+- **A real chat UI, not just curl** — Open WebUI, with history, comes up with `up chat`. It's a Bifrost client like any other — same governance, same tracing, no side door to Ollama.
+- **GPU inference is a light switch** — `serveshed up chat` / `up eval` / `gpu-off`. Ollama and vLLM are mutually exclusive by construction; releasing the GPU is one command, verified to actually free VRAM.
+- **Evidence, not vibes, promotes a model** — `model accept` requires a checksummed evaluation bundle *and* a checksummed benchmark bundle for the same alias, explicit pass/latency/throughput thresholds, and blocks `.env` promotion the moment any threshold fails.
+- **Immutable, tamper-evident runs** — every eval, benchmark, and acceptance decision writes a SHA-256-manifested bundle. Verification rejects mismatches, missing files, symlinks, and path traversal before a bundle is trusted.
+- **Content logging is a deliberate, documented choice, not a default nobody looked at** — currently on for all traffic ([ADR 0016](docs/adrs/0016-content-logging-enabled-by-default.md); Bifrost has no per-key content scoping, so this applies to every caller). It defaulted to hidden-by-default before that; either way, it's one config value, one static test asserting it matches what's declared, and treated as sensitive data either way.
+- **No silent cloud route — enforced, not promised** — no default cloud provider exists in the config. [LiteLLM](https://www.litellm.ai/) sits fully isolated on its own port purely as a future comparison candidate against Bifrost — nothing in this stack routes through it — and a static check fails the build the moment anything chains it through Bifrost anyway.
+- **Fail-closed backups** — Synology writes happen only when the mount is real *and* a reviewed marker file is present. A dangling mount point never silently fills your root disk.
+- **Hardware-aware model registry** — recommendations are ranked against your actual detected VRAM/RAM, not a model card's advertised context window.
+- **Dependency-free bootstrap** — the control plane is standard-library Python, `uv`-managed, with 76 offline tests and 30 static architecture checks that run without Docker or a network connection.
+- **Every non-obvious call is an ADR** — [19 of them](#-decision-log) so far, several written the same day the bug they fix was found on real hardware.
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -95,7 +102,7 @@ flowchart TB
 
     BF -->|ollama/*| OL["Ollama<br/>interactive chat"]
     BF -->|vllm/*| VL["vLLM<br/>batch / concurrency"]
-    OL --> GPU[("RTX 5070 Ti · 16 GB<br/>one runtime at a time")]
+    OL --> GPU[("Consumer GPU · 12-16 GB<br/>one runtime at a time")]
     VL --> GPU
 
     BF -. OTLP .-> OTC["OTel Collector"]
@@ -121,14 +128,14 @@ Ollama and vLLM are never kept active together: `serveshed up chat` stops vLLM f
 
 Storage is two-tier: local NVMe holds everything live (models, databases, caches, current runs); an optional Synology NAS holds archives and backups later and never blocks startup.
 
-## 🛠️ One-time setup
+## One-time setup
 
 Everything in this section happens once per machine (or once after a `git pull` that changes dependencies). **This is not the daily workflow** — skip to [Daily driver](#-daily-driver) once you've done this a first time.
 
-**Prerequisites:** Ubuntu Desktop, an NVIDIA GPU with a working driver, [`uv`](https://docs.astral.sh/uv/) installed.
+**Prerequisites:** Ubuntu Desktop, an NVIDIA GPU (12-16GB VRAM recommended) with a working driver, [`uv`](https://docs.astral.sh/uv/) installed.
 
 ```bash
-git clone <this-repo> serveshed && cd serveshed
+git clone git@github.com:shirkattack/ServeShed.git serveshed && cd serveshed
 uv sync --locked          # dependency-free bootstrap, no package index needed
 uv run serveshed init       # generates .env with fresh per-service secrets, mode 0600
 uv run serveshed doctor     # read-only host check: python, docker, GPU, disk, ports…
@@ -152,7 +159,7 @@ uv run serveshed up chat --dry-run
 uv run serveshed gpu-off --dry-run
 ```
 
-## 🔁 Daily driver
+## Daily driver
 
 This is the loop you actually run every time you sit down to use the model — no re-pulling, no re-initializing.
 
@@ -183,7 +190,7 @@ uv run serveshed gpu-off   # end of session
 
 </td></tr></table>
 
-## 👀 Where to look
+## Where to look
 
 Phoenix's UI, Bifrost's own UI, and where the logs live:
 
@@ -199,7 +206,7 @@ Phoenix's UI, Bifrost's own UI, and where the logs live:
 
 Phoenix is the one to leave open in a tab — it's where you actually see what a request looked like: the full prompt, the full response, token usage, latency, routing, and errors. Content logging is on by default for all traffic ([ADR 0016](docs/adrs/0016-content-logging-enabled-by-default.md)) — treat this database as sensitive, same as you would any chat history.
 
-## 💬 Talking to the model
+## Talking to the model
 
 **With chat history — Open WebUI:** open **http://127.0.0.1:3000** and sign up (multi-account mode, ADR 0015). The very first account ever created is admin; every signup after that starts as `pending` until an admin approves it from Admin Panel → Users — including family members you invite later. Pick a model (only the ones allow-listed for it show up — `local/qwen-fast`, `local/qwen-quality`, `local/gemma-judge`), and chat. It's a plain Bifrost client under the hood — every conversation still traces into Phoenix like anything else. This is the one to reach for day to day, and the one to hand to family members once their account is approved and you've reached them over Tailscale (see [Remote access & storage](#-remote-access--storage)).
 
@@ -230,29 +237,43 @@ uv run python examples/simple_client.py --agent coding "Write a Python function 
 - **Point Hermes Agent or any OpenAI-SDK agent framework at it** — set its base URL to `http://127.0.0.1:8080/v1` and use the `BIFROST_VK_HERMES` key; every call still gets governed, traced, and privacy-scoped exactly like the examples above.
 - **A cross-family judge pass** — after generating and saving outputs from `local/qwen-fast`, unload it (`gpu-off`), then load `local/gemma-judge` and grade the saved outputs in a separate phase — see [`docs/evals.md`](docs/evals.md) for the full single-GPU judge workflow.
 
-## 🧠 Model matrix
+## Model matrix
 
 `config/models/registry.yaml` is the single source of truth; everything else (recommendations, Bifrost aliases, static checks) derives from it.
+
+> **Note:** Multiple Qwen variants serve different purposes—`fast` for daily use, `quality` for precision work, `batch` for concurrent operations, and experimental variants for testing specific optimizations (quantization methods, CPU offload, refusal ablation).
+
+### Production models
 
 <!-- BEGIN GENERATED MODEL MATRIX (scripts/generate-model-matrix.py) -->
 | Alias | Runtime | Role | Status |
 |---|---|---|---|
 | `local/qwen-fast` | Ollama | Default daily model for chat, coding, tools, multimodal tasks, and routine evaluations | Measurement approved — **default** |
 | `local/qwen-quality` | Ollama | Higher-precision Qwen comparison for quality-sensitive local work | Measurement approved |
-| `experimental/qwen-nvfp4` | Ollama | Blackwell-oriented Qwen quantization candidate for quality and speed comparison | Experimental, Measurement approved |
-| `experimental/qwen-abliterated` | Ollama | Refusal-ablated Qwen3.5-9B for research/creative use where default refusal behavior gets in the way; never used as a judge or eval grader | Experimental, Measurement approved |
 | `local/qwen-batch` | vLLM | Concurrent agents and batch evaluation generation after a quantized vLLM artifact is accepted | Review-gated |
 | `local/gemma-judge` | Ollama | Different-family local judge and multimodal comparison model | Measurement approved |
+| `local/embed` | Ollama | Embeddings for future RAG and semantic evaluation | Review-gated |
+
+### Experimental models
+
+<details>
+<summary><strong>Show experimental variants</strong></summary>
+
+| Alias | Runtime | Role | Status |
+|---|---|---|---|
+| `experimental/qwen-nvfp4` | Ollama | Blackwell-oriented Qwen quantization candidate for quality and speed comparison | Experimental, Measurement approved |
+| `experimental/qwen-abliterated` | Ollama | Refusal-ablated Qwen3.5-9B for research/creative use where default refusal behavior gets in the way; never used as a judge or eval grader | Experimental, Measurement approved |
 | `experimental/hermes-agent` | Ollama | Hermes-focused tool-use, structured-output, and agent compatibility challenger | Experimental, Review-gated |
 | `experimental/qwen38-offload` | Ollama | Occasional Qwen3.8 quality comparison using partial CPU offload | Experimental, Measurement approved |
-| `local/embed` | Ollama | Embeddings for future RAG and semantic evaluation | Review-gated |
+
+</details>
 <!-- END GENERATED MODEL MATRIX -->
 
 Regenerate after any registry change: `uv run python scripts/generate-model-matrix.py` (`./scripts/check.sh` fails if it's stale).
 
-Artifact size is never treated as VRAM usage — context, KV cache, runtime buffers, and the desktop compositor all compete for the same 16 GB. See [`docs/models.md`](docs/models.md) for the full provenance and measurement policy.
+Artifact size is never treated as VRAM usage — context, KV cache, runtime buffers, and the desktop compositor all compete for the available VRAM (typically 12-16 GB on consumer GPUs). See [`docs/models.md`](docs/models.md) for the full provenance and measurement policy.
 
-## 🎛️ Command reference
+## Command reference
 
 <details>
 <summary><strong>Lifecycle & host</strong> — <code>init · doctor · status · up · down · gpu-off · logs</code></summary>
@@ -322,7 +343,7 @@ uv run serveshed config validate --docker  # + authoritative Compose render
 ```
 </details>
 
-## 🔬 Evaluation & acceptance workflow
+## Evaluation & acceptance workflow
 
 ```text
 plan (offline) → run (live, through Bifrost) → verify (checksum) → accept (thresholds) → promote (optional)
@@ -339,7 +360,7 @@ $SERVESHED_DATA_DIR/eval-runs/
 
 Warmups stay in raw benchmark data but never touch the aggregates. `--limit` runs still archive the *exact* selected input, with separate digests for the full source dataset and the selected subset — so a rerun and a re-decision can always be traced back to precisely what ran. `model accept` will not promote a candidate whose bundle fails checksum verification, targets a different alias than expected, or misses any configured threshold — and every attempt, pass or fail, writes its own decision bundle. See [`docs/evals.md`](docs/evals.md).
 
-## 🛡️ Design & safety highlights
+## Design & safety highlights
 
 A few decisions worth calling out specifically, because they're the parts most "local LLM" setups skip:
 
@@ -353,7 +374,7 @@ A few decisions worth calling out specifically, because they're the parts most "
 
 **Governance resolves to real access, not vibes.** Every Bifrost virtual key (Hermes, research, coding, eval, judge, Open WebUI) has its own key and an explicit `allowed_models` list; a static check fails if any allow-listed alias doesn't resolve to a configured provider alias.
 
-## 📜 Decision log
+## Decision log
 
 Material architecture decisions live as ADRs in [`docs/adrs/`](docs/adrs/) — including the ones written the same day a bug was found and fixed on real hardware.
 
@@ -384,7 +405,7 @@ Material architecture decisions live as ADRs in [`docs/adrs/`](docs/adrs/) — i
 
 </details>
 
-## 📁 Repository layout
+## Repository layout
 
 ```text
 serveshed/
@@ -404,7 +425,7 @@ serveshed/
     └── models.md · evals.md · security.md · tailscale.md · synology.md · …
 ```
 
-## 🧪 Development
+## Development
 
 ```bash
 ./scripts/check.sh          # lock check, sync, compileall, 76 tests, static validation — fully offline
@@ -421,7 +442,7 @@ uv add --group tracing arize-phoenix-client arize-phoenix-otel opentelemetry-sdk
 
 Anyone (or any agent) working in this repo should read `README.md` → `docs/handoff.md` → `docs/verification-report.md` → the ADRs, in that order, before making changes.
 
-## 📡 Remote access & storage
+## Remote access & storage
 
 **Tailscale** runs on the Ubuntu host itself, never in a container. `serveshed tailscale plan` only *prints* the commands to review and run yourself — Serve for tailnet-only access, never Funnel. Bifrost, Phoenix, and Open WebUI are all proxyable; nothing else. Once Serve is running, every device already on your tailnet — including your own phone, no extra setup — reaches all three at `https://<machine>.<tailnet>.ts.net` (Bifrost), `:8443` (Phoenix), and `:8444` (Open WebUI).
 
