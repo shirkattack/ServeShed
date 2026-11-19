@@ -253,6 +253,7 @@ uv run python examples/simple_client.py --agent coding "Write a Python function 
 | `local/qwen-batch` | vLLM | Concurrent agents and batch evaluation generation after a quantized vLLM artifact is accepted | Review-gated |
 | `local/gemma-judge` | Ollama | Different-family local judge and multimodal comparison model | Measurement approved |
 | `local/embed` | Ollama | Embeddings for future RAG and semantic evaluation | Review-gated |
+| `local/phi4-judge` | Ollama | Second cross-family judge (Phi) for the refusal pilot; conflict-free with all stages | Measurement approved |
 
 ### Experimental models
 
@@ -265,6 +266,21 @@ uv run python examples/simple_client.py --agent coding "Write a Python function 
 | `experimental/qwen-abliterated` | Ollama | Refusal-ablated Qwen3.5-9B for research/creative use where default refusal behavior gets in the way; never used as a judge or eval grader | Experimental, Measurement approved |
 | `experimental/hermes-agent` | Ollama | Hermes-focused tool-use, structured-output, and agent compatibility challenger | Experimental, Review-gated |
 | `experimental/qwen38-offload` | Ollama | Occasional Qwen3.8 quality comparison using partial CPU offload | Experimental, Measurement approved |
+
+</details>
+
+### Pilot models
+
+<details>
+<summary><strong>Show refusal-pilot models under test</strong></summary>
+
+| Alias | Runtime | Role | Status |
+|---|---|---|---|
+| `pilot/qwen3-8b` | Ollama | Refusal/over-refusal pilot model under test — sequential stages, one at a time | Measurement approved |
+| `pilot/ministral3-8b` | Ollama | Refusal/over-refusal pilot model under test — sequential stages, one at a time | Measurement approved |
+| `pilot/llama31-8b` | Ollama | Refusal/over-refusal pilot model under test — sequential stages, one at a time | Review-gated |
+| `pilot/gpt-oss-20b` | Ollama | Refusal/over-refusal pilot model under test — sequential stages, one at a time | Measurement approved |
+| `pilot/gemma3-12b` | Ollama | Refusal/over-refusal pilot model under test — sequential stages, one at a time | Measurement approved |
 
 </details>
 <!-- END GENERATED MODEL MATRIX -->

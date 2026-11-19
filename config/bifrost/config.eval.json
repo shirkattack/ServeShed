@@ -53,7 +53,10 @@
       "x-bf-eh-quantization",
       "x-bf-eh-runtime",
       "x-bf-eh-prompt-revision",
-      "x-bf-eh-git-commit"
+      "x-bf-eh-git-commit",
+      "x-bf-eh-arm",
+      "x-bf-eh-stratum",
+      "x-bf-eh-benchmark"
     ],
     "whitelisted_routes": [
       "/health"
@@ -71,7 +74,10 @@
         "x-bf-eh-quantization",
         "x-bf-eh-runtime",
         "x-bf-eh-prompt-revision",
-        "x-bf-eh-git-commit"
+        "x-bf-eh-git-commit",
+        "x-bf-eh-arm",
+        "x-bf-eh-stratum",
+        "x-bf-eh-benchmark"
       ],
       "denylist": []
     }
@@ -88,7 +94,13 @@
             "experimental/qwen-nvfp4",
             "local/gemma-judge",
             "experimental/qwen38-offload",
-            "experimental/qwen-abliterated"
+            "experimental/qwen-abliterated",
+            "pilot/qwen3-8b",
+            "pilot/ministral3-8b",
+            "pilot/llama31-8b",
+            "pilot/gpt-oss-20b",
+            "local/phi4-judge",
+            "pilot/gemma3-12b"
           ],
           "aliases": {
             "local/qwen-fast": "qwen3.5:9b",
@@ -96,7 +108,13 @@
             "experimental/qwen-nvfp4": "qwen3.5:9b-nvfp4",
             "local/gemma-judge": "gemma4:12b",
             "experimental/qwen38-offload": "qwen3.8:27b",
-            "experimental/qwen-abliterated": "huihui_ai/qwen3.5-abliterated:9b-q4_K"
+            "experimental/qwen-abliterated": "huihui_ai/qwen3.5-abliterated:9b-q4_K",
+            "pilot/qwen3-8b": "qwen3:8b-cap6k",
+            "pilot/ministral3-8b": "ministral-3:8b-cap6k",
+            "pilot/llama31-8b": "llama3.1:8b",
+            "pilot/gpt-oss-20b": "gpt-oss:20b",
+            "local/phi4-judge": "phi4",
+            "pilot/gemma3-12b": "gemma3:12b"
           },
           "weight": 1.0,
           "ollama_key_config": {
@@ -329,6 +347,32 @@
               "local/qwen-quality",
               "local/gemma-judge",
               "experimental/qwen-abliterated"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "vk-refusal-pilot",
+        "name": "refusal-pilot",
+        "value": "env.BIFROST_VK_REFUSAL_PILOT",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "ollama",
+            "allowed_models": [
+              "pilot/qwen3-8b",
+              "pilot/ministral3-8b",
+              "pilot/llama31-8b",
+              "pilot/gpt-oss-20b",
+              "experimental/qwen-abliterated",
+              "local/qwen-fast",
+              "local/gemma-judge",
+              "local/phi4-judge",
+              "pilot/gemma3-12b"
             ],
             "key_ids": [
               "*"

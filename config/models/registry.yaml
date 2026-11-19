@@ -170,7 +170,7 @@
       "license": "Apache-2.0",
       "approximate_disk_gib": 6.6,
       "approval": "approved-for-measurement-only",
-      "notes": "Base is Qwen3.5-9B, same as local/qwen-fast — abliteration (activation-space refusal-direction removal, not fine-tuning) strips the refusal circuit only; huihui_ai's own model card calls it a 'crude, proof-of-concept implementation' with no rigorous safety review. Independent benchmarking shows measurable TruthfulQA/Lambada degradation versus the unmodified base. Treat as experimental until measured the same as any other candidate — starting successfully is not acceptance. Do not use in the judge or eval-grader role: an uncensored judge undermines the judging function.",
+      "notes": "Base is Qwen3.5-9B, same as local/qwen-fast \u2014 abliteration (activation-space refusal-direction removal, not fine-tuning) strips the refusal circuit only; huihui_ai's own model card calls it a 'crude, proof-of-concept implementation' with no rigorous safety review. Independent benchmarking shows measurable TruthfulQA/Lambada degradation versus the unmodified base. Treat as experimental until measured the same as any other candidate \u2014 starting successfully is not acceptance. Do not use in the judge or eval-grader role: an uncensored judge undermines the judging function.",
       "tier": "experimental",
       "enabled": true,
       "workloads": [
@@ -432,6 +432,262 @@
       ],
       "default_parameters": {},
       "runtime_parameters": {}
+    },
+    {
+      "alias": "pilot/qwen3-8b",
+      "gateway_model": "ollama/pilot/qwen3-8b",
+      "purpose": "Refusal/over-refusal pilot model under test \u2014 sequential stages, one at a time",
+      "runtime": "ollama",
+      "upstream_repo": "Qwen/Qwen3-8B",
+      "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+      "artifact": "qwen3:8b-cap6k",
+      "artifact_digest": "",
+      "quantization": "official Ollama Q4_K_M",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": null,
+      "approval": "approved-for-measurement-only",
+      "tier": "pilot",
+      "enabled": true,
+      "workloads": [
+        "evaluation"
+      ],
+      "min_vram_gib": 9.0,
+      "recommended_vram_gib": 11.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "refusal-pilot",
+        "qwen",
+        "thinking",
+        "stage-1"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      },
+      "notes": "VRAM figures are pre-measurement estimates from registry comparables; confirm with `model recommend --vram-gib 16` and a measured pull before Stage 1. Tool support not validated on host (left false). Stage 1 pathfinder. Thinking cannot be disabled through Bifrost (ADR 0018) \u2014 thinking-mode presence is a recorded covariate. HF revision pinned 2026-08-19; set artifact_digest at pull. Bifrost routes to a locally built -cap6k tag (FROM qwen3:8b, PARAMETER num_predict 6144) as the ADR 0018 workaround; it cannot be pulled -- pull qwen3:8b then `ollama create` the -cap6k tag."
+    },
+    {
+      "alias": "pilot/ministral3-8b",
+      "gateway_model": "ollama/pilot/ministral3-8b",
+      "purpose": "Refusal/over-refusal pilot model under test \u2014 sequential stages, one at a time",
+      "runtime": "ollama",
+      "upstream_repo": "mistralai/Ministral-3-8B-Instruct-2512",
+      "revision": "5b26027e7b19eeb4b7352e1fed3926375dd2cb4d",
+      "artifact": "ministral-3:8b-cap6k",
+      "artifact_digest": "",
+      "quantization": "official Ollama tag (quantization to record at pull time)",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": null,
+      "approval": "approved-for-measurement-only",
+      "tier": "pilot",
+      "enabled": true,
+      "workloads": [
+        "evaluation"
+      ],
+      "min_vram_gib": 10.0,
+      "recommended_vram_gib": 12.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "refusal-pilot",
+        "mistral",
+        "stage-2"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      },
+      "notes": "VRAM figures are pre-measurement estimates from registry comparables; confirm with `model recommend --vram-gib 16` and a measured pull before Stage 1. Tool support not validated on host (left false). Stage 2. Instruct (non-reasoning) variant; a separate Reasoning-2512 sibling is NOT this alias. HF revision pinned 2026-08-19. Bifrost routes to a locally built -cap6k tag (FROM ministral-3:8b, PARAMETER num_predict 6144) as the ADR 0018 workaround; it cannot be pulled -- pull ministral-3:8b then `ollama create` the -cap6k tag."
+    },
+    {
+      "alias": "pilot/llama31-8b",
+      "gateway_model": "ollama/pilot/llama31-8b",
+      "purpose": "Refusal/over-refusal pilot model under test \u2014 sequential stages, one at a time",
+      "runtime": "ollama",
+      "upstream_repo": "meta-llama/Llama-3.1-8B-Instruct",
+      "revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+      "artifact": "llama3.1:8b",
+      "artifact_digest": "",
+      "quantization": "official Ollama tag (quantization to record at pull time)",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "Llama-3.1 community license",
+      "approximate_disk_gib": null,
+      "approval": "not-approved",
+      "tier": "pilot",
+      "enabled": true,
+      "workloads": [
+        "evaluation"
+      ],
+      "min_vram_gib": 9.0,
+      "recommended_vram_gib": 11.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "refusal-pilot",
+        "llama",
+        "stage-4",
+        "review-gated"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      },
+      "notes": "VRAM figures are pre-measurement estimates from registry comparables; confirm with `model recommend --vram-gib 16` and a measured pull before Stage 1. Tool support not validated on host (left false). Stage 4. NOT approved: HF weights/metadata gated (manual) \u2014 user decision required; the Ollama artifact avoids the gate but makes the chat-template source the Ollama tag, a recorded factor."
+    },
+    {
+      "alias": "pilot/gpt-oss-20b",
+      "gateway_model": "ollama/pilot/gpt-oss-20b",
+      "purpose": "Refusal/over-refusal pilot model under test \u2014 sequential stages, one at a time",
+      "runtime": "ollama",
+      "upstream_repo": "openai/gpt-oss-20b",
+      "revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "artifact": "gpt-oss:20b",
+      "artifact_digest": "",
+      "quantization": "native MXFP4 (published scheme; differs from Q4_K_M peers \u2014 recorded C9 quantization factor)",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "Apache-2.0",
+      "approximate_disk_gib": null,
+      "approval": "approved-for-measurement-only",
+      "tier": "pilot",
+      "enabled": true,
+      "workloads": [
+        "evaluation"
+      ],
+      "min_vram_gib": 14.0,
+      "recommended_vram_gib": 16.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "refusal-pilot",
+        "gpt-oss",
+        "moe",
+        "stage-5"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "0"
+      },
+      "notes": "VRAM figures are pre-measurement estimates from registry comparables; confirm with `model recommend --vram-gib 16` and a measured pull before Stage 1. Tool support not validated on host (left false). Stage 5, pending confirmation of the 20b size (120b is tier-3). 14 GiB artifact on a 16 GiB desktop GPU: near-zero headroom, keep-alive 0. MoE 21.5B total / 3.6B active."
+    },
+    {
+      "alias": "local/phi4-judge",
+      "gateway_model": "ollama/local/phi4-judge",
+      "purpose": "Second cross-family judge (Phi) for the refusal pilot; conflict-free with all stages",
+      "runtime": "ollama",
+      "upstream_repo": "microsoft/phi-4",
+      "revision": "2db69c1c3e91a05d2c64a3185acfbaf36f744e25",
+      "artifact": "phi4",
+      "artifact_digest": "",
+      "quantization": "official Ollama Q4 (record digest at pull)",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "MIT",
+      "approximate_disk_gib": null,
+      "approval": "approved-for-measurement-only",
+      "tier": "judge",
+      "enabled": true,
+      "workloads": [
+        "judge",
+        "evaluation"
+      ],
+      "min_vram_gib": 11.0,
+      "recommended_vram_gib": 13.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "refusal-pilot",
+        "phi",
+        "judge"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      },
+      "notes": "Prompted refusal judge (OR-Bench 3-class template). microsoft/phi-4 (14.66B, MIT), Ollama phi4. Out-of-test-set family -> conflict-free with every stage. HF revision pinned 2026-08-20; set artifact_digest at pull."
+    },
+    {
+      "alias": "pilot/gemma3-12b",
+      "gateway_model": "ollama/pilot/gemma3-12b",
+      "purpose": "Refusal/over-refusal pilot model under test \u2014 sequential stages, one at a time",
+      "runtime": "ollama",
+      "upstream_repo": "google/gemma-3-12b-it",
+      "revision": "96b6f1eccf38110c56df3a15bffe176da04bfd80",
+      "artifact": "gemma3:12b",
+      "artifact_digest": "",
+      "quantization": "official Ollama tag (quantization to record at pull time)",
+      "context_tokens": 8192,
+      "modalities": [
+        "text"
+      ],
+      "tools": false,
+      "license": "gemma",
+      "approximate_disk_gib": null,
+      "approval": "approved-for-measurement-only",
+      "tier": "pilot",
+      "enabled": true,
+      "workloads": [
+        "evaluation"
+      ],
+      "min_vram_gib": 11.0,
+      "recommended_vram_gib": 13.0,
+      "recommended_ram_gib": 32.0,
+      "cpu_offload": "none",
+      "tags": [
+        "refusal-pilot",
+        "gemma",
+        "stage-3"
+      ],
+      "default_parameters": {
+        "max_tokens": 2048
+      },
+      "runtime_parameters": {
+        "context_tokens": 8192,
+        "parallel": 1,
+        "keep_alive": "2m"
+      },
+      "notes": "VRAM figures are pre-measurement estimates from registry comparables; confirm with `model recommend --vram-gib 16` and a measured pull before Stage 1. Tool support not validated on host (left false). Stage 3. gemma-3-12b-it (12.2B, multimodal but text-only here). C9: local/gemma-judge is EXCLUDED for this stage (Gemma judging Gemma) \u2014 panel is phi4 + strmatch, so Stage 3 has one strong judge (documented). HF revision pinned 2026-08-21."
     }
   ]
 }

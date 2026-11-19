@@ -44,17 +44,48 @@ def status_label(spec: ModelSpec, *, default_alias: str) -> str:
     return label
 
 
-def render_table(registry_path: Path, *, default_alias: str) -> str:
-    registry = load_registry(registry_path)
+# Tiers rendered in their own collapsible section, in this order; every other
+# tier goes in the main (production) table.
+COLLAPSED_TIERS = (
+    ("experimental", "Experimental models", "Show experimental variants"),
+    ("pilot", "Pilot models", "Show refusal-pilot models under test"),
+)
+
+
+def _rows(specs: list[ModelSpec], *, default_alias: str) -> list[str]:
     lines = [
         "| Alias | Runtime | Role | Status |",
         "|---|---|---|---|",
     ]
-    for spec in registry.values():
+    for spec in specs:
         lines.append(
             f"| `{spec.alias}` | {runtime_label(spec.runtime)} | {spec.purpose} | "
             f"{status_label(spec, default_alias=default_alias)} |"
         )
+    return lines
+
+
+def render_table(registry_path: Path, *, default_alias: str) -> str:
+    specs = list(load_registry(registry_path).values())
+    collapsed = {tier for tier, _, _ in COLLAPSED_TIERS}
+    lines = _rows(
+        [spec for spec in specs if spec.tier not in collapsed], default_alias=default_alias
+    )
+    for tier, heading, summary in COLLAPSED_TIERS:
+        group = [spec for spec in specs if spec.tier == tier]
+        if not group:
+            continue
+        lines += [
+            "",
+            f"### {heading}",
+            "",
+            "<details>",
+            f"<summary><strong>{summary}</strong></summary>",
+            "",
+            *_rows(group, default_alias=default_alias),
+            "",
+            "</details>",
+        ]
     return "\n".join(lines)
 
 

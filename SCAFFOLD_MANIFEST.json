@@ -7,8 +7,8 @@
     },
     {
       "path": ".env.example",
-      "sha256": "d373178774e00fa3cc70117d4cac1d86d7e7825c5e0b6880879564b271423eba",
-      "size": 6040
+      "sha256": "87f303f24c54f5fafa6719e75ff44bd91af5e489eaf6d736e1693810cfcba85c",
+      "size": 6093
     },
     {
       "path": ".github/workflows/check.yml",
@@ -42,23 +42,33 @@
     },
     {
       "path": "README.md",
-      "sha256": "2dd7c240716f374297c03ec253a280a1115388b2248b76c9176c3877f96b722b",
-      "size": 31490
+      "sha256": "6ff31a8f6f711ff2b86fb624733aaf3b71d3665d07071ac082b90fb7e779b27a",
+      "size": 33170
     },
     {
       "path": "compose.yaml",
-      "sha256": "52c34b85324542ad45e1d7dfb570d356f64ca00eb5501f3ef42675a8bde7c063",
-      "size": 10879
+      "sha256": "ec7419e7ce85ee615808867f66e73828f983d2b49e2b7509496649b25b28604c",
+      "size": 11004
     },
     {
       "path": "config/bifrost/config.eval.json",
-      "sha256": "b949cc905ab692ed622e7bc4a6d16589f795fa0efa93772338525fc788fa83c6",
-      "size": 9071
+      "sha256": "2d323ebcfe9238bbd7a6b38070978d027ab6159fd2d9ebe44fd6dcc632f8abf3",
+      "size": 10412
     },
     {
       "path": "config/bifrost/config.json",
-      "sha256": "b949cc905ab692ed622e7bc4a6d16589f795fa0efa93772338525fc788fa83c6",
-      "size": 9071
+      "sha256": "2d323ebcfe9238bbd7a6b38070978d027ab6159fd2d9ebe44fd6dcc632f8abf3",
+      "size": 10412
+    },
+    {
+      "path": "config/bifrost/config.json.bak-hyst-20260825",
+      "sha256": "d7fc3122e04037794ee5fdfac980fb891c74efa94cbedad5364a5664b106f639",
+      "size": 10399
+    },
+    {
+      "path": "config/bifrost/config.json.bak-telemetry-20260825T151922Z",
+      "sha256": "2bda34f92a41cdb280409c33a193aa5e0976721d0486c59c6991d3e0f92f3304",
+      "size": 10248
     },
     {
       "path": "config/bifrost/mcp-library.empty.json",
@@ -92,8 +102,8 @@
     },
     {
       "path": "config/models/registry.yaml",
-      "sha256": "c676d7e6a72c08f8aa1e5f2b118b67c0a63ec2ea5fe6fc3d978e0bb7cfa1dc65",
-      "size": 13215
+      "sha256": "7ab69d19cdba5ac1de74caa1bb1bcb2c6deb9d81be986bfa690f300de7e02990",
+      "size": 23110
     },
     {
       "path": "config/otel/collector.yaml",
@@ -387,8 +397,8 @@
     },
     {
       "path": "scripts/generate-model-matrix.py",
-      "sha256": "9c91f2aba834f4993fb21f592ee1c5e5edbdfceb8b99a91be4ee4060dc83fcee",
-      "size": 3199
+      "sha256": "7e2e7e8b9165385641c1e4fd712f52c822f42df503279f472a5fc1a6b7282f67",
+      "size": 4203
     },
     {
       "path": "scripts/package.sh",
@@ -472,8 +482,8 @@
     },
     {
       "path": "src/serveshed/env.py",
-      "sha256": "82ee7424970168c693e4493f91830f35656b656312cd8cc8004f51076351c393",
-      "size": 8389
+      "sha256": "e9cafa69122ff2448c0d10eb214ec802cad117a07b435549370f6fb9da0fd9e0",
+      "size": 8503
     },
     {
       "path": "src/serveshed/evaluations.py",
